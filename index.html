@@ -2,6 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Classroom Spotlight & Mingle</title>
     <style>
       body {
@@ -25,11 +26,22 @@
         box-sizing: border-box;
       }
 
+      /* CANVAS FOR CONFETTI EFFECT */
+      #confetti-canvas {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        pointer-events: none;
+        z-index: 9999;
+      }
+
       /* CONTROLS */
       .controls {
         margin-bottom: 20px;
         display: flex;
-        gap: 15px;
+        gap: 12px;
         background: rgba(255, 255, 255, 0.95);
         padding: 15px;
         border-radius: 10px;
@@ -49,6 +61,10 @@
         color: white;
         cursor: pointer;
         font-weight: bold;
+        transition: transform 0.1s, background-color 0.2s;
+      }
+      .controls button:active {
+        transform: scale(0.96);
       }
 
       .btn-pair {
@@ -57,6 +73,19 @@
 
       .btn-music {
         background: #27ae60 !important;
+      }
+
+      .btn-direction {
+        background: #8e44ad !important;
+      }
+
+      .btn-shuffle {
+        background: #d35400 !important;
+      }
+
+      .btn-showall {
+        background: #2c3e50 !important;
+        display: none; /* Hidden by default */
       }
 
       /* CLASSROOM GRID */
@@ -124,6 +153,8 @@
         user-select: none;
         box-sizing: border-box;
         transition: 0.2s;
+        position: relative;
+        overflow: hidden;
       }
 
       /* Person Icon Styling */
@@ -176,8 +207,8 @@
         animation: none !important;
         transform: none !important;
       }
-      .desk.vacant svg {
-        display: none !important; /* Itatago ang tao icon */
+      .desk.vacant svg, .desk.vacant .item-reveal {
+        display: none !important;
       }
 
       /* SYSTEM PICK: GOLD GLOW & ZOOM IN/OUT ANIMATION */
@@ -252,9 +283,82 @@
         margin-top: 10px;
         text-transform: uppercase;
       }
+
+      /* TELLING DIRECTION MODE STYLING & ITEM ANIMATIONS */
+      .direction-mode-active .desk:not(.vacant) {
+        border-color: #8e44ad !important;
+        background: #f3e5f5 !important;
+      }
+
+      .item-reveal {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        height: 100%;
+        font-size: 28px;
+        font-weight: bold;
+        user-select: none;
+      }
+
+      /* REVEAL ITEM STYLES & ANIMATIONS */
+      .desk.revealed-diamond {
+        background: #e0f7fa !important;
+        border-color: #00bcd4 !important;
+        box-shadow: 0 0 15px #00bcd4 !important;
+      }
+      .pop-diamond {
+        animation: diamondSparkle 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+      }
+      @keyframes diamondSparkle {
+        0% { transform: scale(0) rotate(-45deg); opacity: 0; }
+        60% { transform: scale(1.4) rotate(15deg); opacity: 1; filter: drop-shadow(0 0 8px #00e5ff); }
+        100% { transform: scale(1) rotate(0deg); }
+      }
+
+      .desk.revealed-star {
+        background: #fffde7 !important;
+        border-color: #fbc02d !important;
+        box-shadow: 0 0 15px #fbc02d !important;
+      }
+      .pop-star {
+        animation: starBounce 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+      }
+      @keyframes starBounce {
+        0% { transform: scale(0) rotate(-180deg); opacity: 0; }
+        60% { transform: scale(1.3) rotate(20deg); opacity: 1; filter: drop-shadow(0 0 8px #ffeb3b); }
+        100% { transform: scale(1) rotate(0deg); }
+      }
+
+      .desk.revealed-bomb {
+        background: #ffebee !important;
+        border-color: #e53935 !important;
+        box-shadow: 0 0 15px #e53935 !important;
+      }
+      .pop-bomb {
+        animation: bombExplode 0.5s ease-in-out forwards;
+      }
+      @keyframes bombExplode {
+        0% { transform: scale(0.2); opacity: 0; }
+        30% { transform: scale(1.3); filter: drop-shadow(0 0 12px #ff1744); }
+        50% { transform: scale(0.9); }
+        70% { transform: scale(1.1); }
+        100% { transform: scale(1); }
+      }
+
+      .shake-box {
+        animation: boxShake 0.4s ease-in-out;
+      }
+      @keyframes boxShake {
+        0%, 100% { transform: translateX(0); }
+        25% { transform: translateX(-6px) rotate(-5deg); }
+        75% { transform: translateX(6px) rotate(5deg); }
+      }
     </style>
   </head>
   <body>
+    <canvas id="confetti-canvas"></canvas>
+
     <div class="controls">
       <label
         >ROW: <input type="number" id="slotCount" value="8" style="width: 40px"
@@ -268,6 +372,15 @@
       <button class="btn-pair" onclick="startRoulette(2)">
         👥 Pick a Pair
       </button>
+      <button class="btn-direction" id="directionToggleBtn" onclick="toggleDirectionMode()">
+        🧭 Telling Direction Mode
+      </button>
+      <button class="btn-shuffle" id="shuffleBtn" onclick="shuffleDirectionItems()" style="display: none;">
+        🔀 Reshuffle Items
+      </button>
+      <button class="btn-showall" id="showAllBtn" onclick="showAllItems()">
+        👁️ Show All / Ipakita Lahat
+      </button>
       <button class="btn-music" id="musicBtn" onclick="toggleMusic()">
         🎵 Play BGM
       </button>
@@ -278,10 +391,81 @@
     <div class="blackboard">Blackboard</div>
 
     <script>
-      let nextNumber = 1;
       let rouletteRunning = false;
+      let isDirectionMode = false;
 
       const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+      /* ==================== CONFETTI SYSTEM ==================== */
+      const canvas = document.getElementById("confetti-canvas");
+      const ctx = canvas.getContext("2d");
+      let particles = [];
+      let animationId = null;
+
+      function resizeCanvas() {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+      }
+      window.addEventListener("resize", resizeCanvas);
+      resizeCanvas();
+
+      function createConfetti(x, y, count = 40) {
+        const colors = ["#ff007f", "#00e5ff", "#ffeb3b", "#76ff03", "#e040fb", "#ff9100"];
+        for (let i = 0; i < count; i++) {
+          const angle = Math.random() * Math.PI * 2;
+          const speed = Math.random() * 8 + 4;
+          particles.push({
+            x: x !== undefined ? x : canvas.width / 2,
+            y: y !== undefined ? y : canvas.height / 3,
+            vx: Math.cos(angle) * speed,
+            vy: Math.sin(angle) * speed - 3,
+            size: Math.random() * 8 + 5,
+            color: colors[Math.floor(Math.random() * colors.length)],
+            rotation: Math.random() * 360,
+            rotationSpeed: (Math.random() - 0.5) * 12,
+            opacity: 1,
+            gravity: 0.25,
+            drag: 0.98
+          });
+        }
+        if (!animationId) {
+          animateConfetti();
+        }
+      }
+
+      function animateConfetti() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        
+        particles.forEach((p, index) => {
+          p.vx *= p.drag;
+          p.vy *= p.drag;
+          p.vy += p.gravity;
+          p.x += p.vx;
+          p.y += p.vy;
+          p.rotation += p.rotationSpeed;
+          p.opacity -= 0.015;
+
+          if (p.opacity <= 0) {
+            particles.splice(index, 1);
+            return;
+          }
+
+          ctx.save();
+          ctx.translate(p.x, p.y);
+          ctx.rotate((p.rotation * Math.PI) / 180);
+          ctx.globalAlpha = p.opacity;
+          ctx.fillStyle = p.color;
+          ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size);
+          ctx.restore();
+        });
+
+        if (particles.length > 0) {
+          animationId = requestAnimationFrame(animateConfetti);
+        } else {
+          animationId = null;
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+        }
+      }
 
       function playSound(freq = 600, type = "sine", duration = 0.05) {
         if (audioCtx.state === "suspended") {
@@ -304,6 +488,56 @@
 
         osc.start();
         osc.stop(audioCtx.currentTime + duration);
+      }
+
+      /* AUDIO EFFECTS FOR DIRECTION MODE ITEMS */
+      function playItemSound(item) {
+        if (audioCtx.state === "suspended") {
+          audioCtx.resume();
+        }
+        const now = audioCtx.currentTime;
+
+        if (item === "diamond") {
+          [523.25, 659.25, 783.99, 1046.50].forEach((freq, i) => {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = "sine";
+            osc.frequency.setValueAtTime(freq, now + i * 0.05);
+            gain.gain.setValueAtTime(0.12, now + i * 0.05);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.05 + 0.25);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start(now + i * 0.05);
+            osc.stop(now + i * 0.05 + 0.25);
+          });
+        } else if (item === "star") {
+          [440, 554.37, 659.25].forEach((freq, i) => {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = "triangle";
+            osc.frequency.setValueAtTime(freq, now + i * 0.07);
+            gain.gain.setValueAtTime(0.12, now + i * 0.07);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.07 + 0.3);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start(now + i * 0.07);
+            osc.stop(now + i * 0.07 + 0.3);
+          });
+        } else if (item === "bomb") {
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+          osc.type = "sawtooth";
+          osc.frequency.setValueAtTime(160, now);
+          osc.frequency.exponentialRampToValueAtTime(30, now + 0.35);
+
+          gain.gain.setValueAtTime(0.25, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
+
+          osc.connect(gain);
+          gain.connect(audioCtx.destination);
+          osc.start(now);
+          osc.stop(now + 0.4);
+        }
       }
 
       /* BACKGROUND MUSIC SYSTEM */
@@ -398,7 +632,7 @@
           const slot = document.createElement("div");
           slot.className = "slot";
           if (i % 2 === 1 && i !== slots - 1) slot.style.marginRight = "30px";
-          if (i < fill) slot.appendChild(createDesk(nextNumber++));
+          if (i < fill) slot.appendChild(createDesk());
           slot.addEventListener("dragover", (e) => e.preventDefault());
           slot.addEventListener("drop", handleDrop);
           newRow.appendChild(slot);
@@ -416,9 +650,13 @@
         wrapper.prepend(container);
 
         updateRowLabels();
+
+        if (isDirectionMode) {
+          shuffleDirectionItems();
+        }
       }
 
-      function createDesk(num) {
+      function createDesk() {
         const d = document.createElement("div");
         d.className = "desk";
 
@@ -434,8 +672,16 @@
           e.target.classList.remove("dragging"),
         );
 
-        // 3-STAGE CLICK SYSTEM
         d.onclick = () => {
+          // DIRECTION MODE CLICK HANDLING
+          if (isDirectionMode) {
+            if (d.classList.contains("vacant") || d.dataset.directionRevealed === "true") return;
+
+            revealDeskItem(d);
+            return;
+          }
+
+          // ORIGINAL 3-STAGE CLICK SYSTEM
           if (d.classList.contains("disabled")) return;
 
           // PAG ANG SYSTEM ANG PUMILI
@@ -469,6 +715,124 @@
         return d;
       }
 
+      function revealDeskItem(d) {
+        const item = d.dataset.directionItem;
+        d.dataset.directionRevealed = "true";
+
+        // Get Desk position for targeted confetti burst
+        const rect = d.getBoundingClientRect();
+        const centerX = rect.left + rect.width / 2;
+        const centerY = rect.top + rect.height / 2;
+
+        if (item === "diamond") {
+          d.classList.add("revealed-diamond");
+          d.innerHTML = `<div class="item-reveal pop-diamond">💎</div>`;
+          playItemSound("diamond");
+          createConfetti(centerX, centerY, 60);
+        } else if (item === "star") {
+          d.classList.add("revealed-star");
+          d.innerHTML = `<div class="item-reveal pop-star">⭐</div>`;
+          playItemSound("star");
+          createConfetti(centerX, centerY, 40);
+        } else if (item === "bomb") {
+          d.classList.add("revealed-bomb", "shake-box");
+          d.innerHTML = `<div class="item-reveal pop-bomb">💣</div>`;
+          playItemSound("bomb");
+        }
+      }
+
+      /* TELLING DIRECTION MODE CONTROLS & EXACT ITEM DISTRIBUTION */
+      function toggleDirectionMode() {
+        isDirectionMode = !isDirectionMode;
+        const btn = document.getElementById("directionToggleBtn");
+        const shuffleBtn = document.getElementById("shuffleBtn");
+        const showAllBtn = document.getElementById("showAllBtn");
+        const wrapper = document.getElementById("classroom-wrapper");
+
+        if (isDirectionMode) {
+          btn.innerText = "🏫 Exit Direction Mode";
+          btn.style.background = "#c0392b";
+          shuffleBtn.style.display = "inline-block";
+          showAllBtn.style.display = "inline-block";
+          wrapper.classList.add("direction-mode-active");
+          shuffleDirectionItems();
+        } else {
+          btn.innerText = "🧭 Telling Direction Mode";
+          btn.style.background = "#8e44ad";
+          shuffleBtn.style.display = "none";
+          showAllBtn.style.display = "none";
+          wrapper.classList.remove("direction-mode-active");
+          resetDesksFromDirectionMode();
+        }
+      }
+
+      /* ITEM DISTRIBUTION LOGIC: 1 DIAMOND, 50% STARS, 50% BOMBS */
+      function shuffleDirectionItems() {
+        const desks = Array.from(document.querySelectorAll(".desk:not(.vacant)"));
+        if (desks.length === 0) return;
+
+        // Reset desks display
+        desks.forEach((d) => {
+          delete d.dataset.directionRevealed;
+          d.className = "desk";
+          d.innerHTML = `<svg viewBox="0 0 24 24">
+            <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+          </svg>`;
+        });
+
+        // 1. Pick exactly ONE index for 1 Diamond
+        let indices = Array.from({ length: desks.length }, (_, i) => i);
+        indices.sort(() => Math.random() - 0.5);
+
+        const diamondIdx = indices.pop();
+        desks[diamondIdx].dataset.directionItem = "diamond";
+
+        // 2. Divide remaining indices into half star and half bomb
+        const halfCount = Math.floor(indices.length / 2);
+        for (let i = 0; i < indices.length; i++) {
+          const idx = indices[i];
+          if (i < halfCount) {
+            desks[idx].dataset.directionItem = "star";
+          } else {
+            desks[idx].dataset.directionItem = "bomb";
+          }
+        }
+
+        playSound(650, "sine", 0.1);
+      }
+
+      /* SHOW ALL / IPAKITA LAHAT BUTTON LOGIC (ONLY ACTIVE IN DIRECTION MODE) */
+      function showAllItems() {
+        if (!isDirectionMode) return;
+        const desks = document.querySelectorAll(".desk");
+
+        desks.forEach((d) => {
+          if (!d.classList.contains("vacant")) {
+            revealDeskItem(d);
+          }
+        });
+        
+        // Grand multi-burst confetti celebration
+        createConfetti(window.innerWidth * 0.25, window.innerHeight * 0.4, 50);
+        createConfetti(window.innerWidth * 0.5, window.innerHeight * 0.3, 60);
+        createConfetti(window.innerWidth * 0.75, window.innerHeight * 0.4, 50);
+
+        playSound(800, "sine", 0.1);
+      }
+
+      function resetDesksFromDirectionMode() {
+        document.querySelectorAll(".desk").forEach((d) => {
+          delete d.dataset.directionItem;
+          delete d.dataset.directionRevealed;
+          if (!d.classList.contains("vacant")) {
+            d.className = "desk";
+            d.innerHTML = `<svg viewBox="0 0 24 24">
+              <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+            </svg>`;
+          }
+        });
+      }
+
       function handleDrop(e) {
         e.preventDefault();
         const drag = document.querySelector(".dragging");
@@ -489,7 +853,6 @@
           .querySelectorAll(".desk")
           .forEach((d) => d.classList.remove("selected-system", "active"));
 
-        // HINDI kasama sa pwedeng piliin ang parehong disabled at vacant (empty) na mga box
         const desks = Array.from(
           document.querySelectorAll(".desk:not(.disabled):not(.vacant)"),
         );
