@@ -22,11 +22,12 @@
         align-items: center;
         min-height: 100vh;
         padding: 20px;
+        box-sizing: border-box;
       }
 
       /* CONTROLS */
       .controls {
-        margin-bottom: 30px;
+        margin-bottom: 20px;
         display: flex;
         gap: 15px;
         background: rgba(255, 255, 255, 0.95);
@@ -35,6 +36,9 @@
         box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
         z-index: 2000;
         position: relative;
+        align-items: center;
+        flex-wrap: wrap;
+        justify-content: center;
       }
 
       .controls button {
@@ -51,6 +55,10 @@
         background: #e67e22 !important;
       }
 
+      .btn-music {
+        background: #27ae60 !important;
+      }
+
       /* CLASSROOM GRID */
       #classroom-wrapper {
         width: 100%;
@@ -58,6 +66,7 @@
         display: flex;
         flex-direction: column;
         align-items: center;
+        margin-bottom: 20px;
       }
       .row-container {
         display: flex;
@@ -67,7 +76,7 @@
         margin-bottom: 20px;
         width: 100%;
       }
-      
+
       /* Row Number Label sa Kaliwa */
       .row-label {
         font-weight: bold;
@@ -76,7 +85,7 @@
         background: rgba(255, 255, 255, 0.9);
         padding: 8px 12px;
         border-radius: 6px;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
         min-width: 60px;
         text-align: center;
       }
@@ -111,7 +120,7 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        cursor: grab;
+        cursor: pointer;
         user-select: none;
         box-sizing: border-box;
         transition: 0.2s;
@@ -125,7 +134,7 @@
         transition: 0.2s;
       }
 
-      /* SPOTLIGHT & ZOOM ANIMATION EFFECTS */
+      /* ROUTINE / FLASHING EFFECT WHILE ROULETTE RUNS */
       .active {
         background: #4da6ff !important;
         transform: scale(1.1);
@@ -134,33 +143,57 @@
         fill: white !important;
       }
 
-      /* Selected Desk Zoom In & Out Animation */
-      .selected {
+      /* 1. MANUAL CLICK (1st Click): PINK GLOW & ZOOM IN/OUT ANIMATION */
+      .selected-user {
+        background: #ff69b4 !important;
+        border-color: #ff1493 !important;
+        z-index: 10;
+        position: relative;
+        animation: pinkZoomInOut 0.6s ease-in-out infinite alternate;
+      }
+      .selected-user svg {
+        fill: #fff !important;
+      }
+
+      @keyframes pinkZoomInOut {
+        0% {
+          transform: scale(1);
+          box-shadow: 0 0 10px rgba(255, 105, 180, 0.6);
+        }
+        100% {
+          transform: scale(1.3);
+          box-shadow:
+            0 0 25px #ff69b4,
+            0 0 12px #ff1493;
+        }
+      }
+
+      /* 2. MANUAL CLICK (2nd Click): VACANT / DASHED EMPTY BOX */
+      .desk.vacant {
+        background: transparent !important;
+        border: 2px dashed #888 !important;
+        box-shadow: none !important;
+        animation: none !important;
+        transform: none !important;
+      }
+      .desk.vacant svg {
+        display: none !important; /* Itatago ang tao icon */
+      }
+
+      /* SYSTEM PICK: GOLD GLOW & ZOOM IN/OUT ANIMATION */
+      .selected-system {
         background: gold !important;
         border-color: orange !important;
         z-index: 10;
         position: relative;
-        animation: zoomInOut 0.6s ease-in-out infinite alternate;
+        animation: goldZoomInOut 0.6s ease-in-out infinite alternate;
         cursor: pointer !important;
       }
-      .selected svg {
+      .selected-system svg {
         fill: #fff !important;
       }
 
-      /* DISABLED / DONE DESK */
-      .desk.disabled {
-        background: #d6d6d6 !important;
-        border-color: #aaa !important;
-        cursor: not-allowed !important;
-        pointer-events: none !important;
-        animation: none !important;
-        transform: none !important;
-      }
-      .desk.disabled svg {
-        fill: #888 !important;
-      }
-
-      @keyframes zoomInOut {
+      @keyframes goldZoomInOut {
         0% {
           transform: scale(1);
           box-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
@@ -173,6 +206,21 @@
         }
       }
 
+      /* DISABLED / DONE DESK */
+      .desk.disabled {
+        background: #d6d6d6 !important;
+        border-color: #aaa !important;
+        cursor: not-allowed !important;
+        pointer-events: none !important;
+        animation: none !important;
+        transform: none !important;
+        box-shadow: none !important;
+      }
+      .desk.disabled svg {
+        fill: #888 !important;
+        display: block !important;
+      }
+
       .delete-btn {
         background-color: #ff4d4d;
         color: white;
@@ -183,6 +231,26 @@
         border-radius: 6px;
         font-size: 24px;
         font-weight: bold;
+      }
+
+      /* BLACKBOARD STYLING */
+      .blackboard {
+        width: 100%;
+        max-width: 800px;
+        height: 50px;
+        background: #1e3d2f;
+        border: 6px solid #8b4513;
+        border-radius: 6px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #ffffff;
+        font-weight: bold;
+        font-size: 18px;
+        letter-spacing: 2px;
+        box-shadow: 0 6px 15px rgba(0, 0, 0, 0.25);
+        margin-top: 10px;
+        text-transform: uppercase;
       }
     </style>
   </head>
@@ -200,9 +268,14 @@
       <button class="btn-pair" onclick="startRoulette(2)">
         👥 Pick a Pair
       </button>
+      <button class="btn-music" id="musicBtn" onclick="toggleMusic()">
+        🎵 Play BGM
+      </button>
     </div>
 
     <div id="classroom-wrapper"></div>
+
+    <div class="blackboard">Blackboard</div>
 
     <script>
       let nextNumber = 1;
@@ -233,14 +306,75 @@
         osc.stop(audioCtx.currentTime + duration);
       }
 
-      // Function para i-update ang mga nakalistang row labels sa kaliwa
+      /* BACKGROUND MUSIC SYSTEM */
+      let isMusicPlaying = false;
+      let musicInterval = null;
+
+      function toggleMusic() {
+        if (audioCtx.state === "suspended") {
+          audioCtx.resume();
+        }
+        const btn = document.getElementById("musicBtn");
+
+        if (isMusicPlaying) {
+          clearInterval(musicInterval);
+          isMusicPlaying = false;
+          btn.innerText = "🎵 Play BGM";
+          btn.style.background = "#27ae60";
+        } else {
+          isMusicPlaying = false;
+          playBGMChord();
+          musicInterval = setInterval(playBGMChord, 8000);
+          isMusicPlaying = true;
+          btn.innerText = "🔇 Stop BGM";
+          btn.style.background = "#c0392b";
+        }
+      }
+
+      function playBGMChord() {
+        if (
+          !isMusicPlaying &&
+          musicInterval !== null &&
+          document.getElementById("musicBtn").innerText.includes("Play")
+        )
+          return;
+
+        const chordNotes = [
+          261.63, 329.63, 392.0, 440.0, 523.25, 392.0, 329.63, 293.66,
+        ];
+
+        chordNotes.forEach((note, index) => {
+          setTimeout(() => {
+            if (!isMusicPlaying) return;
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+
+            osc.type = "sine";
+            osc.frequency.value = note;
+
+            gain.gain.setValueAtTime(0.015, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(
+              0.0001,
+              audioCtx.currentTime + 0.9,
+            );
+
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.9);
+          }, index * 1000);
+        });
+      }
+
       function updateRowLabels() {
-        const containers = document.querySelectorAll("#classroom-wrapper .row-container");
+        const containers = document.querySelectorAll(
+          "#classroom-wrapper .row-container",
+        );
         const totalRows = containers.length;
         containers.forEach((container, index) => {
           const label = container.querySelector(".row-label");
           if (label) {
-            // Babaligtarin natin ang bilang dahil prepend ang ginagamit sa pagdagdag (Bottom-up o Top-down ayon sa gusto mo)
             label.innerText = `Row ${totalRows - index}`;
           }
         });
@@ -250,11 +384,10 @@
         const slots = parseInt(document.getElementById("slotCount").value);
         const fill = parseInt(document.getElementById("fillCount").value);
         const wrapper = document.getElementById("classroom-wrapper");
-        
+
         const container = document.createElement("div");
         container.className = "row-container";
 
-        // Gumawa ng Row Label sa kaliwa
         const rowLabel = document.createElement("div");
         rowLabel.className = "row-label";
         container.appendChild(rowLabel);
@@ -281,20 +414,18 @@
 
         container.append(newRow, del);
         wrapper.prepend(container);
-        
-        // I-update ang mga label tuwing may idinadagdag
+
         updateRowLabels();
       }
 
       function createDesk(num) {
         const d = document.createElement("div");
         d.className = "desk";
-        
-        // Nilagyan natin ng Person SVG Icon sa loob ng bawat desk
+
         d.innerHTML = `<svg viewBox="0 0 24 24">
           <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
         </svg>`;
-        
+
         d.draggable = true;
         d.addEventListener("dragstart", (e) =>
           e.target.classList.add("dragging"),
@@ -303,15 +434,36 @@
           e.target.classList.remove("dragging"),
         );
 
-        // Kapag pinindot ang napiling desk, diretsong madi-disable ito
+        // 3-STAGE CLICK SYSTEM
         d.onclick = () => {
-          if (
-            d.classList.contains("selected") &&
-            !d.classList.contains("disabled")
-          ) {
-            d.classList.remove("selected");
+          if (d.classList.contains("disabled")) return;
+
+          // PAG ANG SYSTEM ANG PUMILI
+          if (d.classList.contains("selected-system")) {
+            d.classList.remove("selected-system");
             d.classList.add("disabled");
             playSound(500, "square", 0.1);
+            return;
+          }
+
+          // STAGE 1: Pag walang state -> magiging PINK GLOW
+          if (
+            !d.classList.contains("selected-user") &&
+            !d.classList.contains("vacant")
+          ) {
+            d.classList.add("selected-user");
+            playSound(700, "sine", 0.08);
+          }
+          // STAGE 2: Pag naka PINK GLOW na -> magiging EMPTY DASHED BOX
+          else if (d.classList.contains("selected-user")) {
+            d.classList.remove("selected-user");
+            d.classList.add("vacant");
+            playSound(400, "sine", 0.05);
+          }
+          // STAGE 3: Pag VACANT/EMPTY -> BABALIK SA DATI
+          else if (d.classList.contains("vacant")) {
+            d.classList.remove("vacant");
+            playSound(300, "sine", 0.05);
           }
         };
         return d;
@@ -332,15 +484,17 @@
 
       async function startRoulette(count) {
         if (rouletteRunning) return;
+
         document
           .querySelectorAll(".desk")
-          .forEach((d) => d.classList.remove("selected", "active"));
+          .forEach((d) => d.classList.remove("selected-system", "active"));
 
+        // HINDI kasama sa pwedeng piliin ang parehong disabled at vacant (empty) na mga box
         const desks = Array.from(
-          document.querySelectorAll(".desk:not(.disabled)"),
+          document.querySelectorAll(".desk:not(.disabled):not(.vacant)"),
         );
         if (desks.length < count) {
-          alert("Lahat ng available na estudyante ay napili na!");
+          alert("Lahat ng available na estudyante ay napili na o blangko!");
           return;
         }
         rouletteRunning = true;
@@ -364,7 +518,11 @@
           let r = Math.floor(Math.random() * desks.length);
           if (!final.includes(r)) final.push(r);
         }
-        final.forEach((idx) => desks[idx].classList.add("selected"));
+
+        final.forEach((idx) => {
+          desks[idx].classList.remove("selected-user");
+          desks[idx].classList.add("selected-system");
+        });
 
         playSound(880, "sine", 0.2);
         setTimeout(() => playSound(1174.66, "sine", 0.3), 150);
