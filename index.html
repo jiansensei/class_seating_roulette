@@ -81,6 +81,7 @@
 
       .btn-shuffle {
         background: #d35400 !important;
+        display: none; /* Hidden by default */
       }
 
       .btn-showall {
@@ -284,10 +285,28 @@
         text-transform: uppercase;
       }
 
-      /* TELLING DIRECTION MODE STYLING & ITEM ANIMATIONS */
+      /* TELLING DIRECTION MODE STYLING & HOVER ZOOM ANIMATION */
       .direction-mode-active .desk:not(.vacant) {
         border-color: #8e44ad !important;
         background: #f3e5f5 !important;
+      }
+
+      /* CONTINUOUS ZOOM IN / ZOOM OUT HOVER EFFECT IN DIRECTION MODE */
+      .direction-mode-active .desk:not(.vacant):not([data-direction-revealed="true"]):hover {
+        animation: directionHoverPulse 0.8s ease-in-out infinite alternate !important;
+        z-index: 20;
+        border-color: #ab47bc !important;
+      }
+
+      @keyframes directionHoverPulse {
+        0% {
+          transform: scale(0.95);
+          box-shadow: 0 0 8px rgba(142, 68, 173, 0.4);
+        }
+        100% {
+          transform: scale(1.18);
+          box-shadow: 0 0 20px rgba(171, 71, 188, 0.8), 0 0 8px #8e44ad;
+        }
       }
 
       .item-reveal {
@@ -375,7 +394,7 @@
       <button class="btn-direction" id="directionToggleBtn" onclick="toggleDirectionMode()">
         🧭 Telling Direction Mode
       </button>
-      <button class="btn-shuffle" id="shuffleBtn" onclick="shuffleDirectionItems()" style="display: none;">
+      <button class="btn-shuffle" id="shuffleBtn" onclick="shuffleDirectionItems()">
         🔀 Reshuffle Items
       </button>
       <button class="btn-showall" id="showAllBtn" onclick="showAllItems()">
