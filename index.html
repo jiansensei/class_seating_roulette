@@ -61,7 +61,9 @@
         color: white;
         cursor: pointer;
         font-weight: bold;
-        transition: transform 0.1s, background-color 0.2s;
+        transition:
+          transform 0.1s,
+          background-color 0.2s;
       }
       .controls button:active {
         transform: scale(0.96);
@@ -96,7 +98,8 @@
         display: flex;
         flex-direction: column;
         align-items: center;
-        margin-bottom: 20px;
+        margin-bottom: 10px;
+        position: relative;
       }
       .row-container {
         display: flex;
@@ -105,6 +108,7 @@
         gap: 15px;
         margin-bottom: 20px;
         width: 100%;
+        position: relative;
       }
 
       /* Row Number Label sa Kaliwa */
@@ -129,6 +133,7 @@
         border-radius: 8px;
         box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
         backdrop-filter: blur(5px);
+        position: relative;
       }
       .slot {
         width: 60px;
@@ -140,6 +145,7 @@
         justify-content: center;
         box-sizing: border-box;
         flex-shrink: 0;
+        position: relative;
       }
       .desk {
         width: 60px;
@@ -155,15 +161,44 @@
         box-sizing: border-box;
         transition: 0.2s;
         position: relative;
-        overflow: hidden;
+        overflow: visible;
       }
 
       /* Person Icon Styling */
-      .desk svg {
+      .desk svg.person-icon {
         width: 32px;
         height: 32px;
         fill: #333;
         transition: 0.2s;
+      }
+
+      /* GOOGLE MAPS STYLE MAP PIN MARK ICON SA MISMONG TAAS NG DESK */
+      .location-pin-mark {
+        position: absolute;
+        top: -30px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 30px;
+        height: 30px;
+        z-index: 35;
+        pointer-events: none;
+        filter: drop-shadow(0 3px 6px rgba(0, 0, 0, 0.4));
+      }
+
+      /* PIN ZOOM IN/OUT ANIMATION (KAPAG CLINICK ANG DESK SA DIRECTION MODE) */
+      .desk.direction-zooming .location-pin-mark {
+        animation: pinZoomPulse 0.6s ease-in-out infinite alternate !important;
+      }
+
+      @keyframes pinZoomPulse {
+        0% {
+          transform: translateX(-50%) scale(1);
+          filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+        }
+        100% {
+          transform: translateX(-50%) scale(1.4);
+          filter: drop-shadow(0 6px 10px rgba(231, 76, 60, 0.6));
+        }
       }
 
       /* ROUTINE / FLASHING EFFECT WHILE ROULETTE RUNS */
@@ -171,11 +206,11 @@
         background: #4da6ff !important;
         transform: scale(1.1);
       }
-      .active svg {
+      .active svg.person-icon {
         fill: white !important;
       }
 
-      /* 1. MANUAL CLICK (1st Click): PINK GLOW & ZOOM IN/OUT ANIMATION */
+      /* MANUAL CLICK: PINK GLOW & ZOOM IN/OUT ANIMATION */
       .selected-user {
         background: #ff69b4 !important;
         border-color: #ff1493 !important;
@@ -183,7 +218,7 @@
         position: relative;
         animation: pinkZoomInOut 0.6s ease-in-out infinite alternate;
       }
-      .selected-user svg {
+      .selected-user svg.person-icon {
         fill: #fff !important;
       }
 
@@ -200,7 +235,7 @@
         }
       }
 
-      /* 2. MANUAL CLICK (2nd Click): VACANT / DASHED EMPTY BOX */
+      /* VACANT / DASHED EMPTY BOX */
       .desk.vacant {
         background: transparent !important;
         border: 2px dashed #888 !important;
@@ -208,7 +243,9 @@
         animation: none !important;
         transform: none !important;
       }
-      .desk.vacant svg, .desk.vacant .item-reveal {
+      .desk.vacant svg,
+      .desk.vacant .item-reveal,
+      .desk.vacant .location-pin-mark {
         display: none !important;
       }
 
@@ -221,7 +258,7 @@
         animation: goldZoomInOut 0.6s ease-in-out infinite alternate;
         cursor: pointer !important;
       }
-      .selected-system svg {
+      .selected-system svg.person-icon {
         fill: #fff !important;
       }
 
@@ -248,7 +285,7 @@
         transform: none !important;
         box-shadow: none !important;
       }
-      .desk.disabled svg {
+      .desk.disabled svg.person-icon {
         fill: #888 !important;
         display: block !important;
       }
@@ -285,14 +322,17 @@
         text-transform: uppercase;
       }
 
-      /* TELLING DIRECTION MODE STYLING & HOVER ZOOM ANIMATION */
+      /* TELLING DIRECTION MODE STYLING */
       .direction-mode-active .desk:not(.vacant) {
         border-color: #8e44ad !important;
         background: #f3e5f5 !important;
       }
 
       /* CONTINUOUS ZOOM IN / ZOOM OUT HOVER EFFECT IN DIRECTION MODE */
-      .direction-mode-active .desk:not(.vacant):not([data-direction-revealed="true"]):hover {
+      .direction-mode-active
+        .desk:not(.vacant):not([data-direction-revealed="true"]):not(
+          .direction-zooming
+        ):hover {
         animation: directionHoverPulse 0.8s ease-in-out infinite alternate !important;
         z-index: 20;
         border-color: #ab47bc !important;
@@ -305,8 +345,42 @@
         }
         100% {
           transform: scale(1.18);
-          box-shadow: 0 0 20px rgba(171, 71, 188, 0.8), 0 0 8px #8e44ad;
+          box-shadow:
+            0 0 20px rgba(171, 71, 188, 0.8),
+            0 0 8px #8e44ad;
         }
+      }
+
+      .desk.direction-zooming {
+        z-index: 30 !important;
+        border-color: #e74c3c !important;
+        background: #fadbd8 !important;
+      }
+
+      /* SMALL X ICON TO STOP ZOOMING */
+      .cancel-zoom-btn {
+        position: absolute;
+        top: -10px;
+        right: -10px;
+        width: 22px;
+        height: 22px;
+        background: #e74c3c;
+        color: white;
+        border: 2px solid white;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 13px;
+        font-weight: bold;
+        cursor: pointer;
+        z-index: 40;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+        transition: transform 0.1s;
+      }
+      .cancel-zoom-btn:hover {
+        transform: scale(1.2);
+        background: #c0392b;
       }
 
       .item-reveal {
@@ -327,12 +401,22 @@
         box-shadow: 0 0 15px #00bcd4 !important;
       }
       .pop-diamond {
-        animation: diamondSparkle 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        animation: diamondSparkle 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275)
+          forwards;
       }
       @keyframes diamondSparkle {
-        0% { transform: scale(0) rotate(-45deg); opacity: 0; }
-        60% { transform: scale(1.4) rotate(15deg); opacity: 1; filter: drop-shadow(0 0 8px #00e5ff); }
-        100% { transform: scale(1) rotate(0deg); }
+        0% {
+          transform: scale(0) rotate(-45deg);
+          opacity: 0;
+        }
+        60% {
+          transform: scale(1.4) rotate(15deg);
+          opacity: 1;
+          filter: drop-shadow(0 0 8px #00e5ff);
+        }
+        100% {
+          transform: scale(1) rotate(0deg);
+        }
       }
 
       .desk.revealed-star {
@@ -341,12 +425,22 @@
         box-shadow: 0 0 15px #fbc02d !important;
       }
       .pop-star {
-        animation: starBounce 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        animation: starBounce 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275)
+          forwards;
       }
       @keyframes starBounce {
-        0% { transform: scale(0) rotate(-180deg); opacity: 0; }
-        60% { transform: scale(1.3) rotate(20deg); opacity: 1; filter: drop-shadow(0 0 8px #ffeb3b); }
-        100% { transform: scale(1) rotate(0deg); }
+        0% {
+          transform: scale(0) rotate(-180deg);
+          opacity: 0;
+        }
+        60% {
+          transform: scale(1.3) rotate(20deg);
+          opacity: 1;
+          filter: drop-shadow(0 0 8px #ffeb3b);
+        }
+        100% {
+          transform: scale(1) rotate(0deg);
+        }
       }
 
       .desk.revealed-bomb {
@@ -358,20 +452,98 @@
         animation: bombExplode 0.5s ease-in-out forwards;
       }
       @keyframes bombExplode {
-        0% { transform: scale(0.2); opacity: 0; }
-        30% { transform: scale(1.3); filter: drop-shadow(0 0 12px #ff1744); }
-        50% { transform: scale(0.9); }
-        70% { transform: scale(1.1); }
-        100% { transform: scale(1); }
+        0% {
+          transform: scale(0.2);
+          opacity: 0;
+        }
+        30% {
+          transform: scale(1.3);
+          filter: drop-shadow(0 0 12px #ff1744);
+        }
+        50% {
+          transform: scale(0.9);
+        }
+        70% {
+          transform: scale(1.1);
+        }
+        100% {
+          transform: scale(1);
+        }
       }
 
       .shake-box {
         animation: boxShake 0.4s ease-in-out;
       }
       @keyframes boxShake {
-        0%, 100% { transform: translateX(0); }
-        25% { transform: translateX(-6px) rotate(-5deg); }
-        75% { transform: translateX(6px) rotate(5deg); }
+        0%,
+        100% {
+          transform: translateX(0);
+        }
+        25% {
+          transform: translateX(-6px) rotate(-5deg);
+        }
+        75% {
+          transform: translateX(6px) rotate(5deg);
+        }
+      }
+
+      /* MOVING ARROW ZOOM-IN/OUT EFFECT */
+      @keyframes arrowZoomPulse {
+        0% {
+          transform: scale(1);
+          box-shadow: 0 0 10px #ff007f;
+        }
+        100% {
+          transform: scale(1.22);
+          box-shadow:
+            0 0 22px #ff007f,
+            0 0 8px #fff;
+        }
+      }
+
+      .moving-arrow-cursor {
+        position: fixed;
+        width: 42px;
+        height: 42px;
+        font-size: 26px;
+        background: #ff007f;
+        color: white;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 999;
+        cursor: grab;
+        animation: arrowZoomPulse 0.7s ease-in-out infinite alternate;
+        box-shadow: 0 0 15px #ff007f;
+        user-select: none;
+        transition: transform 0.1s ease-out;
+      }
+
+      .moving-arrow-cursor.paused {
+        animation: none !important;
+        transform: scale(1.15);
+        border: 2px solid yellow;
+      }
+
+      /* SUB-ARROWS FOR CLICKED MOVING ARROW */
+      .sub-arrow-btn {
+        position: fixed;
+        width: 36px;
+        height: 36px;
+        font-size: 20px;
+        background: #2980b9;
+        color: white;
+        border: 2px solid #fff;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+        cursor: pointer;
+        animation: arrowZoomPulse 0.7s ease-in-out infinite alternate;
+        box-shadow: 0 0 12px #3498db;
+        user-select: none;
       }
     </style>
   </head>
@@ -391,10 +563,18 @@
       <button class="btn-pair" onclick="startRoulette(2)">
         👥 Pick a Pair
       </button>
-      <button class="btn-direction" id="directionToggleBtn" onclick="toggleDirectionMode()">
+      <button
+        class="btn-direction"
+        id="directionToggleBtn"
+        onclick="toggleDirectionMode()"
+      >
         🧭 Telling Direction Mode
       </button>
-      <button class="btn-shuffle" id="shuffleBtn" onclick="shuffleDirectionItems()">
+      <button
+        class="btn-shuffle"
+        id="shuffleBtn"
+        onclick="shuffleDirectionItems()"
+      >
         🔀 Reshuffle Items
       </button>
       <button class="btn-showall" id="showAllBtn" onclick="showAllItems()">
@@ -412,6 +592,9 @@
     <script>
       let rouletteRunning = false;
       let isDirectionMode = false;
+      let movingArrowElem = null;
+      let isMovingArrowPaused = false;
+      let subArrowsElems = [];
 
       const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
@@ -429,7 +612,14 @@
       resizeCanvas();
 
       function createConfetti(x, y, count = 40) {
-        const colors = ["#ff007f", "#00e5ff", "#ffeb3b", "#76ff03", "#e040fb", "#ff9100"];
+        const colors = [
+          "#ff007f",
+          "#00e5ff",
+          "#ffeb3b",
+          "#76ff03",
+          "#e040fb",
+          "#ff9100",
+        ];
         for (let i = 0; i < count; i++) {
           const angle = Math.random() * Math.PI * 2;
           const speed = Math.random() * 8 + 4;
@@ -444,7 +634,7 @@
             rotationSpeed: (Math.random() - 0.5) * 12,
             opacity: 1,
             gravity: 0.25,
-            drag: 0.98
+            drag: 0.98,
           });
         }
         if (!animationId) {
@@ -454,7 +644,7 @@
 
       function animateConfetti() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-        
+
         particles.forEach((p, index) => {
           p.vx *= p.drag;
           p.vy *= p.drag;
@@ -517,13 +707,16 @@
         const now = audioCtx.currentTime;
 
         if (item === "diamond") {
-          [523.25, 659.25, 783.99, 1046.50].forEach((freq, i) => {
+          [523.25, 659.25, 783.99, 1046.5].forEach((freq, i) => {
             const osc = audioCtx.createOscillator();
             const gain = audioCtx.createGain();
             osc.type = "sine";
             osc.frequency.setValueAtTime(freq, now + i * 0.05);
             gain.gain.setValueAtTime(0.12, now + i * 0.05);
-            gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.05 + 0.25);
+            gain.gain.exponentialRampToValueAtTime(
+              0.001,
+              now + i * 0.05 + 0.25,
+            );
             osc.connect(gain);
             gain.connect(audioCtx.destination);
             osc.start(now + i * 0.05);
@@ -675,13 +868,20 @@
         }
       }
 
+      const defaultPersonIconHTML = `<svg class="person-icon" viewBox="0 0 24 24">
+        <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+      </svg>`;
+
+      /* GOOGLE MAPS STYLE MAP PIN MARK SVG */
+      const locationPinMarkSVG = `<svg class="location-pin-mark" viewBox="0 0 24 24">
+        <path fill="#ea4335" d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/>
+        <circle fill="#ffffff" cx="12" cy="9" r="3.5"/>
+      </svg>`;
+
       function createDesk() {
         const d = document.createElement("div");
         d.className = "desk";
-
-        d.innerHTML = `<svg viewBox="0 0 24 24">
-          <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
-        </svg>`;
+        d.innerHTML = defaultPersonIconHTML;
 
         d.draggable = true;
         d.addEventListener("dragstart", (e) =>
@@ -691,43 +891,75 @@
           e.target.classList.remove("dragging"),
         );
 
-        d.onclick = () => {
-          // DIRECTION MODE CLICK HANDLING
+        d.onclick = (e) => {
+          /* DIRECTION MODE INTERACTION LOGIC */
           if (isDirectionMode) {
-            if (d.classList.contains("vacant") || d.dataset.directionRevealed === "true") return;
+            if (
+              d.classList.contains("vacant") ||
+              d.dataset.directionRevealed === "true"
+            )
+              return;
 
-            revealDeskItem(d);
+            // STAGE 1: Pag pinindot sa unang pagkakataon -> Lilitaw ang Map Pin SVG sa itaas at mag-zozoom ang PIN lang
+            if (!d.classList.contains("direction-zooming")) {
+              d.classList.add("direction-zooming");
+
+              d.innerHTML = defaultPersonIconHTML + locationPinMarkSVG;
+
+              const xBtn = document.createElement("div");
+              xBtn.className = "cancel-zoom-btn";
+              xBtn.innerText = "✕";
+              xBtn.title = "Itigil ang Zoom";
+
+              xBtn.onclick = (cancelEvt) => {
+                cancelEvt.stopPropagation();
+                d.classList.remove("direction-zooming");
+                xBtn.remove();
+                const pin = d.querySelector(".location-pin-mark");
+                if (pin) pin.remove();
+                playSound(450, "sine", 0.05);
+              };
+
+              d.appendChild(xBtn);
+              playSound(650, "sine", 0.08);
+            }
+            // STAGE 2: Pag pinindot habang nag-zozoom ang pin -> ilalabas ang laman (diamond/star/bomb)
+            else {
+              const existingX = d.querySelector(".cancel-zoom-btn");
+              if (existingX) existingX.remove();
+              d.classList.remove("direction-zooming");
+              revealDeskItem(d);
+            }
             return;
           }
 
-          // ORIGINAL 3-STAGE CLICK SYSTEM
+          /* ORIGINAL 3-STAGE CLICK SYSTEM OUTSIDE DIRECTION MODE */
           if (d.classList.contains("disabled")) return;
 
-          // PAG ANG SYSTEM ANG PUMILI
           if (d.classList.contains("selected-system")) {
             d.classList.remove("selected-system");
             d.classList.add("disabled");
+            const pin = d.querySelector(".location-pin-mark");
+            if (pin) pin.remove();
             playSound(500, "square", 0.1);
             return;
           }
 
-          // STAGE 1: Pag walang state -> magiging PINK GLOW
           if (
             !d.classList.contains("selected-user") &&
             !d.classList.contains("vacant")
           ) {
             d.classList.add("selected-user");
+            d.innerHTML = defaultPersonIconHTML + locationPinMarkSVG;
             playSound(700, "sine", 0.08);
-          }
-          // STAGE 2: Pag naka PINK GLOW na -> magiging EMPTY DASHED BOX
-          else if (d.classList.contains("selected-user")) {
+          } else if (d.classList.contains("selected-user")) {
             d.classList.remove("selected-user");
             d.classList.add("vacant");
+            d.innerHTML = defaultPersonIconHTML;
             playSound(400, "sine", 0.05);
-          }
-          // STAGE 3: Pag VACANT/EMPTY -> BABALIK SA DATI
-          else if (d.classList.contains("vacant")) {
+          } else if (d.classList.contains("vacant")) {
             d.classList.remove("vacant");
+            d.innerHTML = defaultPersonIconHTML;
             playSound(300, "sine", 0.05);
           }
         };
@@ -738,7 +970,6 @@
         const item = d.dataset.directionItem;
         d.dataset.directionRevealed = "true";
 
-        // Get Desk position for targeted confetti burst
         const rect = d.getBoundingClientRect();
         const centerX = rect.left + rect.width / 2;
         const centerY = rect.top + rect.height / 2;
@@ -760,7 +991,6 @@
         }
       }
 
-      /* TELLING DIRECTION MODE CONTROLS & EXACT ITEM DISTRIBUTION */
       function toggleDirectionMode() {
         isDirectionMode = !isDirectionMode;
         const btn = document.getElementById("directionToggleBtn");
@@ -775,6 +1005,8 @@
           showAllBtn.style.display = "inline-block";
           wrapper.classList.add("direction-mode-active");
           shuffleDirectionItems();
+          initDraggableStartArrow();
+          window.addEventListener("keydown", handleArrowNavigation);
         } else {
           btn.innerText = "🧭 Telling Direction Mode";
           btn.style.background = "#8e44ad";
@@ -782,31 +1014,262 @@
           showAllBtn.style.display = "none";
           wrapper.classList.remove("direction-mode-active");
           resetDesksFromDirectionMode();
+          removeMovingArrow();
+          window.removeEventListener("keydown", handleArrowNavigation);
+        }
+      }
+
+      /* INITIALIZE SINGLE DRAGGABLE START ARROW SA MISMONG TAAS NG GREEN BLOCK (BLACKBOARD) */
+      function initDraggableStartArrow() {
+        if (!movingArrowElem) {
+          movingArrowElem = document.createElement("div");
+          movingArrowElem.className = "moving-arrow-cursor";
+          movingArrowElem.innerText = "⬆️";
+
+          const blackboard = document.querySelector(".blackboard");
+          const rect = blackboard.getBoundingClientRect();
+
+          movingArrowElem.style.left = `${rect.left + rect.width / 2 - 21}px`;
+          movingArrowElem.style.top = `${rect.top - 60}px`;
+
+          movingArrowElem.onclick = (e) => {
+            e.stopPropagation();
+            toggleMovingArrowPause();
+          };
+
+          setupArrowDrag(movingArrowElem);
+          document.body.appendChild(movingArrowElem);
+        }
+      }
+
+      function removeSubArrows() {
+        subArrowsElems.forEach((el) => el.remove());
+        subArrowsElems = [];
+      }
+
+      function toggleMovingArrowPause() {
+        isMovingArrowPaused = !isMovingArrowPaused;
+        if (isMovingArrowPaused) {
+          movingArrowElem.classList.add("paused");
+          showSubArrowsForTip();
+          playSound(600, "sine", 0.08);
+        } else {
+          movingArrowElem.classList.remove("paused");
+          removeSubArrows();
+          playSound(500, "sine", 0.08);
+        }
+      }
+
+      function showSubArrowsForTip() {
+        removeSubArrows();
+        if (!movingArrowElem) return;
+
+        const rect = movingArrowElem.getBoundingClientRect();
+        const cx = rect.left + rect.width / 2;
+        const cy = rect.top + rect.height / 2;
+        const symbol = movingArrowElem.innerText;
+
+        let sub1Symbol = "",
+          sub2Symbol = "";
+        let style1 = {},
+          style2 = {};
+
+        if (symbol === "⬆️" || symbol === "⬇️") {
+          sub1Symbol = "⬅️";
+          sub2Symbol = "➡️";
+          style1 = { left: `${cx - 48}px`, top: `${cy - 18}px` };
+          style2 = { left: `${cx + 12}px`, top: `${cy - 18}px` };
+        } else if (symbol === "⬅️" || symbol === "➡️") {
+          sub1Symbol = "⬆️";
+          sub2Symbol = "⬇️";
+          style1 = { left: `${cx - 18}px`, top: `${cy - 48}px` };
+          style2 = { left: `${cx - 18}px`, top: `${cy + 12}px` };
+        }
+
+        const sub1 = document.createElement("div");
+        sub1.className = "sub-arrow-btn";
+        sub1.innerText = sub1Symbol;
+        sub1.style.left = style1.left;
+        sub1.style.top = style1.top;
+        sub1.onclick = (e) => {
+          e.stopPropagation();
+          movingArrowElem.innerText = sub1Symbol;
+          showSubArrowsForTip();
+          playSound(700, "triangle", 0.05);
+        };
+
+        const sub2 = document.createElement("div");
+        sub2.className = "sub-arrow-btn";
+        sub2.innerText = sub2Symbol;
+        sub2.style.left = style2.left;
+        sub2.style.top = style2.top;
+        sub2.onclick = (e) => {
+          e.stopPropagation();
+          movingArrowElem.innerText = sub2Symbol;
+          showSubArrowsForTip();
+          playSound(700, "triangle", 0.05);
+        };
+
+        document.body.appendChild(sub1);
+        document.body.appendChild(sub2);
+        subArrowsElems.push(sub1, sub2);
+      }
+
+      function setupArrowDrag(elem) {
+        let isDragging = false;
+        let startX, startY;
+
+        elem.onmousedown = (e) => {
+          isDragging = false;
+          startX = e.clientX;
+          startY = e.clientY;
+
+          const onMouseMove = (moveEvent) => {
+            if (
+              Math.abs(moveEvent.clientX - startX) > 4 ||
+              Math.abs(moveEvent.clientY - startY) > 4
+            ) {
+              isDragging = true;
+              removeSubArrows();
+              isMovingArrowPaused = true;
+              movingArrowElem.classList.add("paused");
+
+              elem.style.left = `${moveEvent.clientX - 21}px`;
+              elem.style.top = `${moveEvent.clientY - 21}px`;
+            }
+          };
+
+          const onMouseUp = (upEvent) => {
+            window.removeEventListener("mousemove", onMouseMove);
+            window.removeEventListener("mouseup", onMouseUp);
+
+            if (isDragging) {
+              snapArrowToAislesAndBorders(upEvent.clientX, upEvent.clientY);
+            }
+          };
+
+          window.addEventListener("mousemove", onMouseMove);
+          window.addEventListener("mouseup", onMouseUp);
+        };
+      }
+
+      /* SNAPPING LOGIC TO WHITE SPACES AND THEIR BORDERS */
+      function snapArrowToAislesAndBorders(clientX, clientY) {
+        const rowContainers = document.querySelectorAll(
+          "#classroom-wrapper .row-container",
+        );
+        if (rowContainers.length === 0) return;
+
+        let points = [];
+
+        rowContainers.forEach((container) => {
+          const cRect = container.getBoundingClientRect();
+          const slots = Array.from(container.querySelectorAll(".slot"));
+
+          points.push({ x: cRect.left - 12, y: cRect.top + cRect.height / 2 });
+          points.push({ x: cRect.right + 12, y: cRect.top + cRect.height / 2 });
+
+          slots.forEach((slot, sIdx) => {
+            const rect = slot.getBoundingClientRect();
+
+            points.push({ x: rect.left - 6, y: rect.top - 6 });
+            points.push({ x: rect.right + 6, y: rect.top - 6 });
+            points.push({ x: rect.left - 6, y: rect.bottom + 6 });
+            points.push({ x: rect.right + 6, y: rect.bottom + 6 });
+
+            if (sIdx < slots.length - 1) {
+              const nextRect = slots[sIdx + 1].getBoundingClientRect();
+              points.push({
+                x: (rect.right + nextRect.left) / 2,
+                y: rect.top + rect.height / 2,
+              });
+            }
+          });
+        });
+
+        if (points.length === 0) return;
+
+        let closestPoint = null;
+        let minDst = Infinity;
+
+        points.forEach((pt) => {
+          const dst = Math.hypot(pt.x - clientX, pt.y - clientY);
+          if (dst < minDst) {
+            minDst = dst;
+            closestPoint = pt;
+          }
+        });
+
+        if (closestPoint && movingArrowElem) {
+          movingArrowElem.style.left = `${closestPoint.x - 21}px`;
+          movingArrowElem.style.top = `${closestPoint.y - 21}px`;
+          playSound(800, "sine", 0.06);
+        }
+      }
+
+      function removeMovingArrow() {
+        if (movingArrowElem) {
+          movingArrowElem.remove();
+          movingArrowElem = null;
+        }
+        removeSubArrows();
+        isMovingArrowPaused = false;
+      }
+
+      /* ARROW KEYS AY MAGBABAGO LANG NG DIREKSYON NG ARROW */
+      function handleArrowNavigation(e) {
+        if (!isDirectionMode || !movingArrowElem) return;
+
+        let symbol = movingArrowElem.innerText;
+        let changed = false;
+
+        if (e.key === "ArrowUp") {
+          symbol = "⬆️";
+          changed = true;
+        } else if (e.key === "ArrowDown") {
+          symbol = "⬇️";
+          changed = true;
+        } else if (e.key === "ArrowLeft") {
+          symbol = "⬅️";
+          changed = true;
+        } else if (e.key === "ArrowRight") {
+          symbol = "➡️";
+          changed = true;
+        }
+
+        if (changed) {
+          e.preventDefault();
+          movingArrowElem.innerText = symbol;
+          playSound(550, "triangle", 0.04);
+          if (isMovingArrowPaused) {
+            showSubArrowsForTip();
+          }
         }
       }
 
       /* ITEM DISTRIBUTION LOGIC: 1 DIAMOND, 50% STARS, 50% BOMBS */
       function shuffleDirectionItems() {
-        const desks = Array.from(document.querySelectorAll(".desk:not(.vacant)"));
+        const desks = Array.from(
+          document.querySelectorAll(".desk:not(.vacant)"),
+        );
         if (desks.length === 0) return;
 
-        // Reset desks display
         desks.forEach((d) => {
           delete d.dataset.directionRevealed;
+          d.classList.remove("direction-zooming");
+          const existingX = d.querySelector(".cancel-zoom-btn");
+          if (existingX) existingX.remove();
+
           d.className = "desk";
-          d.innerHTML = `<svg viewBox="0 0 24 24">
-            <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
-          </svg>`;
+          d.innerHTML = defaultPersonIconHTML;
         });
 
-        // 1. Pick exactly ONE index for 1 Diamond
         let indices = Array.from({ length: desks.length }, (_, i) => i);
         indices.sort(() => Math.random() - 0.5);
 
         const diamondIdx = indices.pop();
         desks[diamondIdx].dataset.directionItem = "diamond";
 
-        // 2. Divide remaining indices into half star and half bomb
         const halfCount = Math.floor(indices.length / 2);
         for (let i = 0; i < indices.length; i++) {
           const idx = indices[i];
@@ -820,18 +1283,19 @@
         playSound(650, "sine", 0.1);
       }
 
-      /* SHOW ALL / IPAKITA LAHAT BUTTON LOGIC (ONLY ACTIVE IN DIRECTION MODE) */
       function showAllItems() {
         if (!isDirectionMode) return;
         const desks = document.querySelectorAll(".desk");
 
         desks.forEach((d) => {
           if (!d.classList.contains("vacant")) {
+            d.classList.remove("direction-zooming");
+            const existingX = d.querySelector(".cancel-zoom-btn");
+            if (existingX) existingX.remove();
             revealDeskItem(d);
           }
         });
-        
-        // Grand multi-burst confetti celebration
+
         createConfetti(window.innerWidth * 0.25, window.innerHeight * 0.4, 50);
         createConfetti(window.innerWidth * 0.5, window.innerHeight * 0.3, 60);
         createConfetti(window.innerWidth * 0.75, window.innerHeight * 0.4, 50);
@@ -843,11 +1307,13 @@
         document.querySelectorAll(".desk").forEach((d) => {
           delete d.dataset.directionItem;
           delete d.dataset.directionRevealed;
+          d.classList.remove("direction-zooming");
+          const existingX = d.querySelector(".cancel-zoom-btn");
+          if (existingX) existingX.remove();
+
           if (!d.classList.contains("vacant")) {
             d.className = "desk";
-            d.innerHTML = `<svg viewBox="0 0 24 24">
-              <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
-            </svg>`;
+            d.innerHTML = defaultPersonIconHTML;
           }
         });
       }
