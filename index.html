@@ -172,6 +172,24 @@
         transition: 0.2s;
       }
 
+      /* MALIIT NA NUMBER SA TOP RIGHT CORNER NG DESK / SLOT */
+      .desk-number-badge {
+        display: none; /* Lalabas lamang sa Direction Mode */
+        position: absolute;
+        top: -6px;
+        right: -6px;
+        background: #8e44ad;
+        color: white;
+        font-size: 11px;
+        font-weight: bold;
+        padding: 2px 5px;
+        border-radius: 10px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        z-index: 25;
+        pointer-events: none;
+        line-height: 1;
+      }
+
       /* GOOGLE MAPS STYLE MAP PIN MARK ICON SA MISMONG TAAS NG DESK */
       .location-pin-mark {
         position: absolute;
@@ -326,6 +344,10 @@
       .direction-mode-active .desk:not(.vacant) {
         border-color: #8e44ad !important;
         background: #f3e5f5 !important;
+      }
+
+      .direction-mode-active .desk-number-badge {
+        display: block !important; /* Ipakita ang number sa top right sa direction mode */
       }
 
       /* CONTINUOUS ZOOM IN / ZOOM OUT HOVER EFFECT IN DIRECTION MODE */
@@ -824,6 +846,21 @@
             label.innerText = `Row ${totalRows - index}`;
           }
         });
+        updateDeskNumbers();
+      }
+
+      /* AUTOMATICALLY NUMBER DESKS/SLOTS FOR DIRECTION MODE */
+      function updateDeskNumbers() {
+        const desks = document.querySelectorAll(".desk");
+        desks.forEach((desk, idx) => {
+          let badge = desk.querySelector(".desk-number-badge");
+          if (!badge) {
+            badge = document.createElement("span");
+            badge.className = "desk-number-badge";
+            desk.appendChild(badge);
+          }
+          badge.innerText = `#${idx + 1}`;
+        });
       }
 
       function addRow() {
@@ -883,6 +920,11 @@
         d.className = "desk";
         d.innerHTML = defaultPersonIconHTML;
 
+        // Magdagdag ng number badge
+        const badge = document.createElement("span");
+        badge.className = "desk-number-badge";
+        d.appendChild(badge);
+
         d.draggable = true;
         d.addEventListener("dragstart", (e) =>
           e.target.classList.add("dragging"),
@@ -900,11 +942,15 @@
             )
               return;
 
-            // STAGE 1: Pag pinindot sa unang pagkakataon -> Lilitaw ang Map Pin SVG sa itaas at mag-zozoom ang PIN lang
+            const badgeElem = d.querySelector(".desk-number-badge");
+            const badgeHTML = badgeElem ? badgeElem.outerHTML : "";
+
+            // STAGE 1: Pag pinindot sa unang pagkakataon -> Lilitaw ang Map Pin SVG sa itaas habang nananatili ang tao icon at number badge
             if (!d.classList.contains("direction-zooming")) {
               d.classList.add("direction-zooming");
 
-              d.innerHTML = defaultPersonIconHTML + locationPinMarkSVG;
+              d.innerHTML =
+                defaultPersonIconHTML + locationPinMarkSVG + badgeHTML;
 
               const xBtn = document.createElement("div");
               xBtn.className = "cancel-zoom-btn";
@@ -936,6 +982,9 @@
           /* ORIGINAL 3-STAGE CLICK SYSTEM OUTSIDE DIRECTION MODE */
           if (d.classList.contains("disabled")) return;
 
+          const badgeElem = d.querySelector(".desk-number-badge");
+          const badgeHTML = badgeElem ? badgeElem.outerHTML : "";
+
           if (d.classList.contains("selected-system")) {
             d.classList.remove("selected-system");
             d.classList.add("disabled");
@@ -950,16 +999,17 @@
             !d.classList.contains("vacant")
           ) {
             d.classList.add("selected-user");
-            d.innerHTML = defaultPersonIconHTML + locationPinMarkSVG;
+            d.innerHTML =
+              defaultPersonIconHTML + locationPinMarkSVG + badgeHTML;
             playSound(700, "sine", 0.08);
           } else if (d.classList.contains("selected-user")) {
             d.classList.remove("selected-user");
             d.classList.add("vacant");
-            d.innerHTML = defaultPersonIconHTML;
+            d.innerHTML = defaultPersonIconHTML + badgeHTML;
             playSound(400, "sine", 0.05);
           } else if (d.classList.contains("vacant")) {
             d.classList.remove("vacant");
-            d.innerHTML = defaultPersonIconHTML;
+            d.innerHTML = defaultPersonIconHTML + badgeHTML;
             playSound(300, "sine", 0.05);
           }
         };
@@ -970,23 +1020,29 @@
         const item = d.dataset.directionItem;
         d.dataset.directionRevealed = "true";
 
+        const badgeElem = d.querySelector(".desk-number-badge");
+        const badgeHTML = badgeElem ? badgeElem.outerHTML : "";
+
         const rect = d.getBoundingClientRect();
         const centerX = rect.left + rect.width / 2;
         const centerY = rect.top + rect.height / 2;
 
         if (item === "diamond") {
           d.classList.add("revealed-diamond");
-          d.innerHTML = `<div class="item-reveal pop-diamond">💎</div>`;
+          d.innerHTML =
+            `<div class="item-reveal pop-diamond">💎</div>` + badgeHTML;
           playItemSound("diamond");
           createConfetti(centerX, centerY, 60);
         } else if (item === "star") {
           d.classList.add("revealed-star");
-          d.innerHTML = `<div class="item-reveal pop-star">⭐</div>`;
+          d.innerHTML =
+            `<div class="item-reveal pop-star">⭐</div>` + badgeHTML;
           playItemSound("star");
           createConfetti(centerX, centerY, 40);
         } else if (item === "bomb") {
           d.classList.add("revealed-bomb", "shake-box");
-          d.innerHTML = `<div class="item-reveal pop-bomb">💣</div>`;
+          d.innerHTML =
+            `<div class="item-reveal pop-bomb">💣</div>` + badgeHTML;
           playItemSound("bomb");
         }
       }
@@ -1004,6 +1060,7 @@
           shuffleBtn.style.display = "inline-block";
           showAllBtn.style.display = "inline-block";
           wrapper.classList.add("direction-mode-active");
+          updateDeskNumbers();
           shuffleDirectionItems();
           initDraggableStartArrow();
           window.addEventListener("keydown", handleArrowNavigation);
@@ -1260,8 +1317,11 @@
           const existingX = d.querySelector(".cancel-zoom-btn");
           if (existingX) existingX.remove();
 
+          const badgeElem = d.querySelector(".desk-number-badge");
+          const badgeHTML = badgeElem ? badgeElem.outerHTML : "";
+
           d.className = "desk";
-          d.innerHTML = defaultPersonIconHTML;
+          d.innerHTML = defaultPersonIconHTML + badgeHTML;
         });
 
         let indices = Array.from({ length: desks.length }, (_, i) => i);
@@ -1311,9 +1371,12 @@
           const existingX = d.querySelector(".cancel-zoom-btn");
           if (existingX) existingX.remove();
 
+          const badgeElem = d.querySelector(".desk-number-badge");
+          const badgeHTML = badgeElem ? badgeElem.outerHTML : "";
+
           if (!d.classList.contains("vacant")) {
             d.className = "desk";
-            d.innerHTML = defaultPersonIconHTML;
+            d.innerHTML = defaultPersonIconHTML + badgeHTML;
           }
         });
       }
@@ -1329,6 +1392,7 @@
           drag.parentElement.appendChild(old);
           e.currentTarget.appendChild(drag);
         }
+        updateDeskNumbers();
       }
 
       async function startRoulette(count) {
