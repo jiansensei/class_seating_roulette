@@ -527,7 +527,7 @@
         position: fixed;
         width: 42px;
         height: 42px;
-        font-size: 26px;
+        font-size: 20px;
         background: #ff007f;
         color: white;
         border-radius: 50%;
@@ -540,6 +540,7 @@
         box-shadow: 0 0 15px #ff007f;
         user-select: none;
         transition: transform 0.1s ease-out;
+        font-weight: bold;
       }
 
       .moving-arrow-cursor.paused {
@@ -551,13 +552,14 @@
       /* SUB-ARROWS FOR CLICKED MOVING ARROW */
       .sub-arrow-btn {
         position: fixed;
-        width: 36px;
-        height: 36px;
-        font-size: 20px;
+        width: 68px;
+        height: 38px;
+        font-size: 13px;
+        font-weight: bold;
         background: #2980b9;
         color: white;
         border: 2px solid #fff;
-        border-radius: 50%;
+        border-radius: 20px;
         display: flex;
         align-items: center;
         justify-content: center;
@@ -1081,18 +1083,13 @@
         if (!movingArrowElem) {
           movingArrowElem = document.createElement("div");
           movingArrowElem.className = "moving-arrow-cursor";
-          movingArrowElem.innerText = "⬆️";
+          movingArrowElem.innerText = "⬆️"; // Default pointing Up
 
           const blackboard = document.querySelector(".blackboard");
           const rect = blackboard.getBoundingClientRect();
 
           movingArrowElem.style.left = `${rect.left + rect.width / 2 - 21}px`;
           movingArrowElem.style.top = `${rect.top - 60}px`;
-
-          movingArrowElem.onclick = (e) => {
-            e.stopPropagation();
-            toggleMovingArrowPause();
-          };
 
           setupArrowDrag(movingArrowElem);
           document.body.appendChild(movingArrowElem);
@@ -1126,44 +1123,58 @@
         const cy = rect.top + rect.height / 2;
         const symbol = movingArrowElem.innerText;
 
-        let sub1Symbol = "",
-          sub2Symbol = "";
         let style1 = {},
           style2 = {};
+        let label1 = "",
+          label2 = "";
 
-        if (symbol === "⬆️" || symbol === "⬇️") {
-          sub1Symbol = "⬅️";
-          sub2Symbol = "➡️";
-          style1 = { left: `${cx - 48}px`, top: `${cy - 18}px` };
-          style2 = { left: `${cx + 12}px`, top: `${cy - 18}px` };
-        } else if (symbol === "⬅️" || symbol === "➡️") {
-          sub1Symbol = "⬆️";
-          sub2Symbol = "⬇️";
-          style1 = { left: `${cx - 18}px`, top: `${cy - 48}px` };
-          style2 = { left: `${cx - 18}px`, top: `${cy + 12}px` };
+        if (symbol === "⬆️") {
+          style1 = { left: `${cx - 82}px`, top: `${cy - 19}px` };
+          style2 = { left: `${cx + 14}px`, top: `${cy - 19}px` };
+          label1 = "👀 (左)";
+          label2 = "👀 (右)";
+        } else if (symbol === "⬇️") {
+          style1 = { left: `${cx - 82}px`, top: `${cy - 19}px` };
+          style2 = { left: `${cx + 14}px`, top: `${cy - 19}px` };
+          label1 = "👀 (右)";
+          label2 = "👀 (左)";
+        } else if (symbol === "⬅️") {
+          style1 = { left: `${cx - 34}px`, top: `${cy - 52}px` };
+          style2 = { left: `${cx - 34}px`, top: `${cy + 14}px` };
+          label1 = "👀 (右)";
+          label2 = "👀 (左)";
+        } else if (symbol === "➡️") {
+          style1 = { left: `${cx - 34}px`, top: `${cy - 52}px` };
+          style2 = { left: `${cx - 34}px`, top: `${cy + 14}px` };
+          label1 = "👀 (左)";
+          label2 = "👀 (右)";
         }
 
         const sub1 = document.createElement("div");
         sub1.className = "sub-arrow-btn";
-        sub1.innerText = sub1Symbol;
+        sub1.innerText = label1;
         sub1.style.left = style1.left;
         sub1.style.top = style1.top;
         sub1.onclick = (e) => {
           e.stopPropagation();
-          movingArrowElem.innerText = sub1Symbol;
-          showSubArrowsForTip();
+          // Hindi na binabago ang direksyon ng pink arrow kapag pinindot ang blue option
+          isMovingArrowPaused = false;
+          movingArrowElem.classList.remove("paused");
+          removeSubArrows();
           playSound(700, "triangle", 0.05);
         };
 
         const sub2 = document.createElement("div");
         sub2.className = "sub-arrow-btn";
-        sub2.innerText = sub2Symbol;
+        sub2.innerText = label2;
         sub2.style.left = style2.left;
         sub2.style.top = style2.top;
         sub2.onclick = (e) => {
           e.stopPropagation();
-          movingArrowElem.innerText = sub2Symbol;
-          showSubArrowsForTip();
+          // Hindi na binabago ang direksyon ng pink arrow kapag pinindot ang blue option
+          isMovingArrowPaused = false;
+          movingArrowElem.classList.remove("paused");
+          removeSubArrows();
           playSound(700, "triangle", 0.05);
         };
 
@@ -1188,8 +1199,6 @@
             ) {
               isDragging = true;
               removeSubArrows();
-              isMovingArrowPaused = true;
-              movingArrowElem.classList.add("paused");
 
               elem.style.left = `${moveEvent.clientX - 21}px`;
               elem.style.top = `${moveEvent.clientY - 21}px`;
@@ -1207,6 +1216,15 @@
 
           window.addEventListener("mousemove", onMouseMove);
           window.addEventListener("mouseup", onMouseUp);
+        };
+
+        elem.onclick = (e) => {
+          e.stopPropagation();
+          if (isDragging) {
+            isDragging = false;
+            return;
+          }
+          toggleMovingArrowPause();
         };
       }
 
@@ -1273,7 +1291,7 @@
         isMovingArrowPaused = false;
       }
 
-      /* ARROW KEYS AY MAGBABAGO LANG NG DIREKSYON NG ARROW */
+      /* KEYBOARD NAVIGATION FOR ARROW */
       function handleArrowNavigation(e) {
         if (!isDirectionMode || !movingArrowElem) return;
 
