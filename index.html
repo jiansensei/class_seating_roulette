@@ -128,13 +128,22 @@
         display: flex;
         flex-wrap: nowrap;
         gap: 12px;
-        background: rgba(255, 255, 255, 0.92);
-        padding: 15px;
-        border-radius: 8px;
-        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-        backdrop-filter: blur(5px);
         position: relative;
       }
+
+      /* TWO-DESK PAIR CONTAINER WITH WHITE RECTANGLE BACKGROUND */
+      .desk-pair-block {
+        display: flex;
+        flex-wrap: nowrap;
+        gap: 12px;
+        background: rgba(255, 255, 255, 0.92);
+        padding: 15px;
+        border-radius: 12px;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        backdrop-filter: blur(5px);
+        align-items: center;
+      }
+
       .slot {
         width: 60px;
         height: 60px;
@@ -569,6 +578,23 @@
         box-shadow: 0 0 12px #3498db;
         user-select: none;
       }
+
+      /* GREEN DONUT MARKERS WITH YELLOW GLOW EFFECT */
+      .green-donut-marker {
+        position: fixed;
+        width: 24px;
+        height: 24px;
+        border: 4px solid #00ee00;
+        border-radius: 50%;
+        box-sizing: border-box;
+        pointer-events: none;
+        z-index: 950;
+        transform: translate(-50%, -50%);
+        box-shadow:
+          0 0 12px 3px #ffff00,
+          0 0 6px rgba(0, 238, 0, 0.6);
+        background: transparent;
+      }
     </style>
   </head>
   <body>
@@ -619,6 +645,7 @@
       let movingArrowElem = null;
       let isMovingArrowPaused = false;
       let subArrowsElems = [];
+      let greenDonutElems = [];
 
       const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
@@ -632,7 +659,12 @@
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
       }
-      window.addEventListener("resize", resizeCanvas);
+      window.addEventListener("resize", () => {
+        resizeCanvas();
+        if (isDirectionMode) {
+          updateGreenDonutMarkers();
+        }
+      });
       resizeCanvas();
 
       function createConfetti(x, y, count = 40) {
@@ -865,6 +897,64 @@
         });
       }
 
+      /* GREEN DONUT MARKERS MANAGEMENT */
+      function removeGreenDonutMarkers() {
+        greenDonutElems.forEach((el) => el.remove());
+        greenDonutElems = [];
+      }
+
+      function updateGreenDonutMarkers() {
+        removeGreenDonutMarkers();
+        if (!isDirectionMode) return;
+
+        const rowContainers = Array.from(
+          document.querySelectorAll("#classroom-wrapper .row-container"),
+        );
+        if (rowContainers.length === 0) return;
+
+        let rowPairGapsList = [];
+        rowContainers.forEach((container) => {
+          const pairBlocks = Array.from(
+            container.querySelectorAll(".desk-pair-block"),
+          );
+          let pairGaps = [];
+          for (let p = 0; p < pairBlocks.length - 1; p++) {
+            const rectLeft = pairBlocks[p].getBoundingClientRect();
+            const rectRight = pairBlocks[p + 1].getBoundingClientRect();
+            pairGaps.push((rectLeft.right + rectRight.left) / 2);
+          }
+          rowPairGapsList.push(pairGaps);
+        });
+
+        let verticalGaps = [];
+        for (let r = 0; r < rowContainers.length - 1; r++) {
+          const rectCurr = rowContainers[r].getBoundingClientRect();
+          const rectNext = rowContainers[r + 1].getBoundingClientRect();
+          verticalGaps.push((rectCurr.bottom + rectNext.top) / 2);
+        }
+
+        for (let r = 0; r < verticalGaps.length; r++) {
+          const currentPairGaps = rowPairGapsList[r] || [];
+          const nextPairGaps = rowPairGapsList[r + 1] || [];
+
+          const minGapsCount = Math.min(
+            currentPairGaps.length,
+            nextPairGaps.length,
+          );
+          for (let g = 0; g < minGapsCount; g++) {
+            const x = (currentPairGaps[g] + nextPairGaps[g]) / 2;
+            const y = verticalGaps[r];
+
+            const donut = document.createElement("div");
+            donut.className = "green-donut-marker";
+            donut.style.left = `${x}px`;
+            donut.style.top = `${y}px`;
+            document.body.appendChild(donut);
+            greenDonutElems.push(donut);
+          }
+        }
+      }
+
       function addRow() {
         const slots = parseInt(document.getElementById("slotCount").value);
         const fill = parseInt(document.getElementById("fillCount").value);
@@ -879,14 +969,22 @@
 
         const newRow = document.createElement("div");
         newRow.className = "desk-row";
+
+        let currentBlock = null;
+
         for (let i = 0; i < slots; i++) {
+          if (i % 2 === 0) {
+            currentBlock = document.createElement("div");
+            currentBlock.className = "desk-pair-block";
+            newRow.appendChild(currentBlock);
+          }
+
           const slot = document.createElement("div");
           slot.className = "slot";
-          if (i % 2 === 1 && i !== slots - 1) slot.style.marginRight = "30px";
           if (i < fill) slot.appendChild(createDesk());
           slot.addEventListener("dragover", (e) => e.preventDefault());
           slot.addEventListener("drop", handleDrop);
-          newRow.appendChild(slot);
+          currentBlock.appendChild(slot);
         }
 
         const del = document.createElement("button");
@@ -895,6 +993,9 @@
         del.onclick = () => {
           container.remove();
           updateRowLabels();
+          if (isDirectionMode) {
+            updateGreenDonutMarkers();
+          }
         };
 
         container.append(newRow, del);
@@ -904,6 +1005,7 @@
 
         if (isDirectionMode) {
           shuffleDirectionItems();
+          updateGreenDonutMarkers();
         }
       }
 
@@ -922,7 +1024,6 @@
         d.className = "desk";
         d.innerHTML = defaultPersonIconHTML;
 
-        // Magdagdag ng number badge
         const badge = document.createElement("span");
         badge.className = "desk-number-badge";
         d.appendChild(badge);
@@ -936,7 +1037,6 @@
         );
 
         d.onclick = (e) => {
-          /* DIRECTION MODE INTERACTION LOGIC */
           if (isDirectionMode) {
             if (
               d.classList.contains("vacant") ||
@@ -947,7 +1047,6 @@
             const badgeElem = d.querySelector(".desk-number-badge");
             const badgeHTML = badgeElem ? badgeElem.outerHTML : "";
 
-            // STAGE 1: Pag pinindot sa unang pagkakataon -> Lilitaw ang Map Pin SVG sa itaas habang nananatili ang tao icon at number badge
             if (!d.classList.contains("direction-zooming")) {
               d.classList.add("direction-zooming");
 
@@ -970,9 +1069,7 @@
 
               d.appendChild(xBtn);
               playSound(650, "sine", 0.08);
-            }
-            // STAGE 2: Pag pinindot habang nag-zozoom ang pin -> ilalabas ang laman (diamond/star/bomb)
-            else {
+            } else {
               const existingX = d.querySelector(".cancel-zoom-btn");
               if (existingX) existingX.remove();
               d.classList.remove("direction-zooming");
@@ -981,7 +1078,6 @@
             return;
           }
 
-          /* ORIGINAL 3-STAGE CLICK SYSTEM OUTSIDE DIRECTION MODE */
           if (d.classList.contains("disabled")) return;
 
           const badgeElem = d.querySelector(".desk-number-badge");
@@ -1065,6 +1161,7 @@
           updateDeskNumbers();
           shuffleDirectionItems();
           initDraggableStartArrow();
+          updateGreenDonutMarkers();
           window.addEventListener("keydown", handleArrowNavigation);
         } else {
           btn.innerText = "🧭 Telling Direction Mode";
@@ -1074,16 +1171,16 @@
           wrapper.classList.remove("direction-mode-active");
           resetDesksFromDirectionMode();
           removeMovingArrow();
+          removeGreenDonutMarkers();
           window.removeEventListener("keydown", handleArrowNavigation);
         }
       }
 
-      /* INITIALIZE SINGLE DRAGGABLE START ARROW SA MISMONG TAAS NG GREEN BLOCK (BLACKBOARD) */
       function initDraggableStartArrow() {
         if (!movingArrowElem) {
           movingArrowElem = document.createElement("div");
           movingArrowElem.className = "moving-arrow-cursor";
-          movingArrowElem.innerText = "⬆️"; // Default pointing Up
+          movingArrowElem.innerText = "⬆️";
 
           const blackboard = document.querySelector(".blackboard");
           const rect = blackboard.getBoundingClientRect();
@@ -1157,7 +1254,6 @@
         sub1.style.top = style1.top;
         sub1.onclick = (e) => {
           e.stopPropagation();
-          // Hindi na binabago ang direksyon ng pink arrow kapag pinindot ang blue option
           isMovingArrowPaused = false;
           movingArrowElem.classList.remove("paused");
           removeSubArrows();
@@ -1171,7 +1267,6 @@
         sub2.style.top = style2.top;
         sub2.onclick = (e) => {
           e.stopPropagation();
-          // Hindi na binabago ang direksyon ng pink arrow kapag pinindot ang blue option
           isMovingArrowPaused = false;
           movingArrowElem.classList.remove("paused");
           removeSubArrows();
@@ -1228,7 +1323,7 @@
         };
       }
 
-      /* SNAPPING LOGIC TO WHITE SPACES AND THEIR BORDERS */
+      /* SNAPPING LOGIC TO WHITE SPACES, BORDERS, AND GREEN DONUT INTERSECTIONS */
       function snapArrowToAislesAndBorders(clientX, clientY) {
         const rowContainers = document.querySelectorAll(
           "#classroom-wrapper .row-container",
@@ -1236,6 +1331,14 @@
         if (rowContainers.length === 0) return;
 
         let points = [];
+
+        greenDonutElems.forEach((donut) => {
+          const dRect = donut.getBoundingClientRect();
+          points.push({
+            x: dRect.left + dRect.width / 2,
+            y: dRect.top + dRect.height / 2,
+          });
+        });
 
         rowContainers.forEach((container) => {
           const cRect = container.getBoundingClientRect();
@@ -1291,7 +1394,6 @@
         isMovingArrowPaused = false;
       }
 
-      /* KEYBOARD NAVIGATION FOR ARROW */
       function handleArrowNavigation(e) {
         if (!isDirectionMode || !movingArrowElem) return;
 
@@ -1322,7 +1424,6 @@
         }
       }
 
-      /* ITEM DISTRIBUTION LOGIC: 1 DIAMOND, 50% STARS, 50% BOMBS */
       function shuffleDirectionItems() {
         const desks = Array.from(
           document.querySelectorAll(".desk:not(.vacant)"),
@@ -1411,6 +1512,9 @@
           e.currentTarget.appendChild(drag);
         }
         updateDeskNumbers();
+        if (isDirectionMode) {
+          updateGreenDonutMarkers();
+        }
       }
 
       async function startRoulette(count) {
